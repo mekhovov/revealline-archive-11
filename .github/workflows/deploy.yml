@@ -32,19 +32,19 @@ jobs:
           sparse-checkout-cone-mode: false
       - name: Fetch the original immutable release tag for identity verification
         working-directory: source
-        run: git fetch --depth=1 origin refs/tags/v0.51.0:refs/tags/v0.51.0
+        run: git fetch --depth=1 origin refs/tags/v0.51.0:refs/tags/v0.51.0 refs/tags/v0.60.1:refs/tags/v0.60.1
       - name: Require artifact workspace capacity
         run: |
           python3 - <<'PY'
           import shutil
           free = shutil.disk_usage('.').free
-          assert free >= 2 * 1024**3, f'At least 2 GiB free required; found {free}'
+          assert free >= 3 * 1024**3, f'At least 3 GiB free required; found {free}'
           PY
       - name: Check extractor corruption guards and exact artifact inventory rules
         run: |
           python3 -m unittest discover -s source/publishing/pages-controller -p 'test_extract_current.py' -v
           python3 -m unittest discover -s archive/tools -p 'test_*.py' -v
-      - name: Download original ZIP and verify every member without rebuilding source
+      - name: Download original ZIPs and verify every member without rebuilding source
         run: python3 archive/tools/prepare.py --source source --out "$RUNNER_TEMP/archive11"
       - name: Independently reread every artifact byte including hidden files
         run: python3 archive/tools/verify.py "$RUNNER_TEMP/archive11/artifact"
@@ -55,7 +55,7 @@ jobs:
           name: archive11-verification-receipts
           if-no-files-found: warn
           path: |
-            ${{ runner.temp }}/archive11/zip-receipt.json
+            ${{ runner.temp }}/archive11/zip-receipt-*.json
             ${{ runner.temp }}/archive11/receipt.json
             ${{ runner.temp }}/archive11/expected-inventory.json
       - name: Upload complete canonical site
